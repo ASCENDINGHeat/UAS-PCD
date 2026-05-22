@@ -202,6 +202,8 @@ function runAnalysis() {
     payload.append('min_area', document.getElementById('param-min_area').value);
     payload.append('min_perimeter', document.getElementById('param-min_perimeter').value);
     payload.append('min_aspect_ratio', document.getElementById('param-min_aspect_ratio').value);
+    payload.append('max_solidity', document.getElementById('param-max_solidity').value);
+    payload.append('max_circularity', document.getElementById('param-max_circularity').value);
     
     const url = window.DjangoUrls ? window.DjangoUrls.analyzeCapturedFrame : '/analyze/';
     fetch(url, {
@@ -229,7 +231,7 @@ function runAnalysis() {
             tbody.innerHTML = '';
             
             if (data.cracks.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-row-msg">No structural defects detected with current parameters. Adjust sliders to fine-tune.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="empty-row-msg">No structural defects detected with current parameters. Adjust sliders to fine-tune.</td></tr>';
             } else {
                 data.cracks.forEach(c => {
                     const tr = document.createElement('tr');
@@ -242,6 +244,8 @@ function runAnalysis() {
                         <td>${c.perimeter_px} px</td>
                         <td>${c.area_px} px²</td>
                         <td>${c.elongation}</td>
+                        <td style="font-family: monospace; font-weight: 500;">${c.solidity}</td>
+                        <td style="font-family: monospace; font-weight: 500;">${c.circularity}</td>
                     `;
                     tbody.appendChild(tr);
                 });

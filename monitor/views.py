@@ -87,12 +87,15 @@ class AsynchronousCrackTracker:
                             blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
                             cv2.THRESH_BINARY_INV, blockSize=11, C=3
                         )
-                        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-                        closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+                        # Dual Morphology: Close to bridge crack segments, then Open to dissolve isolated noise spots
+                        close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+                        closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, close_kernel)
+                        open_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+                        morphed = cv2.morphologyEx(closed, cv2.MORPH_OPEN, open_kernel)
                         
                         # 3. GEOMETRY FILTER: Analyze individual shapes inside this specific crop
-                        clean_crop_mask = np.zeros_like(closed)
-                        contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                        clean_crop_mask = np.zeros_like(morphed)
+                        contours, _ = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                         
                         for cnt in contours:
                             area = cv2.contourArea(cnt)
@@ -106,6 +109,16 @@ class AsynchronousCrackTracker:
                             # Elongation ratio (how stretched out the contour shape is)
                             aspect_ratio = max(w_c, h_c) / min(w_c, h_c) if min(w_c, h_c) > 0 else 1
                             
+                            # Solidity & Circularity calculations
+                            hull = cv2.convexHull(cnt)
+                            hull_area = cv2.contourArea(hull)
+                            solidity = float(area) / hull_area if hull_area > 0 else 0.0
+                            circularity = (4.0 * np.pi * area) / (perimeter ** 2) if perimeter > 0 else 0.0
+                            
+                            # Apply default noise filters
+                            if solidity > 0.55 or circularity > 0.30:
+                                continue
+                                
                             # Core Logic: Keep it if it is thin/long OR forms a substantial line segment
                             if aspect_ratio > 2.5 or perimeter > 80 or area > 300:
                                 cv2.drawContours(clean_crop_mask, [cnt], -1, 255, thickness=cv2.FILLED)
@@ -188,9 +201,11 @@ class AsynchronousCrackTracker:
                 denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
                 cv2.THRESH_BINARY_INV, blockSize=11, C=3
             )
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-            ret, jpeg = cv2.imencode('.jpg', closed)
+            close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, close_kernel)
+            open_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+            morphed = cv2.morphologyEx(closed, cv2.MORPH_OPEN, open_kernel)
+            ret, jpeg = cv2.imencode('.jpg', morphed)
             return jpeg.tobytes() if ret else None
             
         return None
@@ -345,6 +360,8 @@ def analyze_captured_frame(request):
         min_area = int(request.POST.get('min_area', 15))
         min_perimeter = int(request.POST.get('min_perimeter', 80))
         min_aspect_ratio = float(request.POST.get('min_aspect_ratio', 2.5))
+        max_solidity = float(request.POST.get('max_solidity', 0.55))
+        max_circularity = float(request.POST.get('max_circularity', 0.30))
     except ValueError as e:
         return JsonResponse({'status': 'error', 'message': f'Invalid parameter values: {str(e)}'}, status=400)
         
@@ -399,11 +416,13 @@ def analyze_captured_frame(request):
                 cv2.THRESH_BINARY_INV, blockSize=threshold_block_size, C=threshold_c
             )
             
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+            close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, close_kernel)
+            open_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+            morphed = cv2.morphologyEx(closed, cv2.MORPH_OPEN, open_kernel)
             
-            clean_crop_mask = np.zeros_like(closed)
-            contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            clean_crop_mask = np.zeros_like(morphed)
+            contours, _ = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             
             for cnt in contours:
                 area = cv2.contourArea(cnt)
@@ -413,6 +432,16 @@ def analyze_captured_frame(request):
                 _, _, wc, hc = cv2.boundingRect(cnt)
                 perimeter = cv2.arcLength(cnt, True)
                 aspect_ratio = max(wc, hc) / min(wc, hc) if min(wc, hc) > 0 else 1
+                
+                # Solidity & Circularity calculations
+                hull = cv2.convexHull(cnt)
+                hull_area = cv2.contourArea(hull)
+                solidity = float(area) / hull_area if hull_area > 0 else 0.0
+                circularity = (4.0 * np.pi * area) / (perimeter ** 2) if perimeter > 0 else 0.0
+                
+                # Filter out compact/convex noise features
+                if solidity > max_solidity or circularity > max_circularity:
+                    continue
                 
                 # Filter cracks based on geometry criteria
                 if aspect_ratio >= min_aspect_ratio or perimeter >= min_perimeter or area >= 300:
@@ -442,6 +471,8 @@ def analyze_captured_frame(request):
                         'perimeter_px': round(float(perimeter), 2),
                         'area_px': round(float(area), 2),
                         'elongation': round(float(aspect_ratio), 2),
+                        'solidity': round(float(solidity), 3),
+                        'circularity': round(float(circularity), 3),
                         'severity': severity
                     })
             

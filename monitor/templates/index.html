@@ -227,6 +227,22 @@
                         <input type="range" id="param-min_aspect_ratio" min="1.0" max="10.0" value="2.5" step="0.5" oninput="updateSliderLabel('min_aspect_ratio', this.value); debouncedRunAnalysis();">
                     </div>
 
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Max Solidity (Pebble Filter)</span>
+                            <span id="lbl-max_solidity" class="val">0.55</span>
+                        </div>
+                        <input type="range" id="param-max_solidity" min="0.10" max="1.00" value="0.55" step="0.05" oninput="updateSliderLabel('max_solidity', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Max Circularity (Texture Filter)</span>
+                            <span id="lbl-max_circularity" class="val">0.30</span>
+                        </div>
+                        <input type="range" id="param-max_circularity" min="0.05" max="1.00" value="0.30" step="0.05" oninput="updateSliderLabel('max_circularity', this.value); debouncedRunAnalysis();">
+                    </div>
+
                 </div>
 
             </div>
@@ -248,11 +264,13 @@
                                 <th>Total Perimeter (px)</th>
                                 <th>Contour Area (px²)</th>
                                 <th>Elongation Ratio</th>
+                                <th>Solidity</th>
+                                <th>Circularity</th>
                             </tr>
                         </thead>
                         <tbody id="severityTableBody">
                             <tr>
-                                <td colspan="8" class="empty-row-msg">No diagnostic dataset generated. Capture a still frame to begin.</td>
+                                <td colspan="10" class="empty-row-msg">No diagnostic dataset generated. Capture a still frame to begin.</td>
                             </tr>
                         </tbody>
                     </table>
