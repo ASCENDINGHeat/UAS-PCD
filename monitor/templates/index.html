@@ -1,106 +1,260 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Structural Health Diagnostics</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0f0f11; color: #f1f5f9; margin: 0; padding: 20px;
-        }
-        .container { max-width: 900px; margin: 0 auto; text-align: center; }
-        
-        /* Control Panel Layout */
-        .control-panel {
-            background-color: #16161a;
-            border: 1px solid #27272a;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa; }
-        select, input, button {
-            background-color: #27272a; color: #fff; border: 1px solid #3f3f46;
-            padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; margin-top: 5px; outline: none;
-        }
-        select { width: 100%; cursor: pointer; }
-        .custom-input-group { display: none; margin-top: 12px; gap: 10px; }
-        input { flex-grow: 1; }
-        button { background-color: #2563eb; border: none; font-weight: 600; cursor: pointer; }
-        button:hover { background-color: #1d4ed8; }
-        
-        .viewport { background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #2d2d34; }
-        img { display: block; width: 100%; height: auto; }
-    </style>
+    <title>Structural Health Diagnostics Hub</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Link to External Stylesheet -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
 
-<div class="container">
-    <h2>Real-Time Diagnostics Feed</h2>
+<header>
+    <div class="header-container">
+        <div class="logo">UAS Crack Diagnostics</div>
+        <nav>
+            <div id="nav-live" class="nav-item active" onclick="navigate('live')">Live Diagnostic Feed</div>
+            <div id="nav-still" class="nav-item disabled" onclick="navigate('still')">Still Analysis Studio</div>
+        </nav>
+    </div>
+</header>
 
-    <div class="control-panel">
-        <label for="cameraSelector">Active Video Source Target Selection</label>
-        <select id="cameraSelector" onchange="handleSourceChange()">
-            <option value="0">Default Internal System Webcam (/dev/video0)</option>
-            <option value="1">Secondary USB Capture Device Port (/dev/video1)</option>
-            <option value="http://192.168.1.50:8080/video">Wireless Phone Module Stream (HTTP MJPEG)</option>
-            <option value="rtsp://admin:password@192.168.1.50:554/h264Preview_01_main">Inspection Drone Rig (RTSP Feed)</option>
-            <option value="custom">-- Provide Custom Stream Network URL --</option>
-        </select>
+<div class="main-container">
+    
+    <!-- PAGE 1: Live Feed View -->
+    <div id="page-live-content">
+        <div id="page-live" class="glass-panel">
+            <h2>Real-Time Live Diagnostics</h2>
+            
+            <div class="control-panel">
+                <label class="panel-label" for="cameraSelector">Active Video Source Target Selection</label>
+                <div class="control-row">
+                    <select id="cameraSelector" onchange="handleSourceChange()">
+                        <option value="0">Default Internal System Webcam (/dev/video0)</option>
+                        <option value="1">Secondary USB Capture Device Port (/dev/video1)</option>
+                        <option value="http://192.168.1.50:8080/video">Wireless Phone Module Stream (HTTP MJPEG)</option>
+                        <option value="rtsp://admin:password@192.168.1.50:554/h264Preview_01_main">Inspection Drone Rig (RTSP Feed)</option>
+                        <option value="custom">-- Provide Custom Stream Network URL --</option>
+                    </select>
+                </div>
+                
+                <div id="customUrlGroup" class="custom-input-group">
+                    <input type="text" id="customUrlInput" placeholder="rtsp:// or http:// transmission target...">
+                    <button class="btn btn-primary" onclick="applyCustomSource()">Connect Stream</button>
+                </div>
+            </div>
 
-        <div id="customUrlGroup" class="custom-input-group">
-            <input type="text" id="customUrlInput" placeholder="rtsp:// or http:// transmission target...">
-            <button onclick="applyCustomSource()">Connect Stream</button>
+            <div class="viewport-wrapper">
+                <img id="liveFeedImg" src="{% url 'video_feed_blended' %}" alt="Awaiting Stream Connection Synchronization...">
+            </div>
+
+            <button class="btn btn-capture" onclick="captureAndAnalyzeFrame()">
+                📸 Snap & Analyze Still Frame
+            </button>
         </div>
     </div>
 
-    <div class="viewport">
-        <img src="{% url 'video_feed_blended' %}" alt="Awaiting Stream Connection Synchronization...">
+    <!-- PAGE 2: Still Analysis Studio View -->
+    <div id="page-still-content">
+        <div id="page-still">
+            
+            <div class="pause-alert">
+                <span>Active camera stream paused to conserve system overhead during analysis.</span>
+                <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="resumeLiveStream()">
+                    ▶️ Resume Live Stream
+                </button>
+            </div>
+
+            <div class="studio-layout">
+                
+                <!-- Viewport Panel (Left) -->
+                <div class="glass-panel" style="position: relative;">
+                    <div class="viewport-tabs-container">
+                        <h3>Diagnostic Inspection Viewport</h3>
+                        <div class="preview-tabs">
+                            <div id="tab-raw" class="preview-tab" onclick="switchPreviewTab('raw')">Pre-processed</div>
+                            <div id="tab-mask" class="preview-tab" onclick="switchPreviewTab('mask')">Binary Mask</div>
+                            <div id="tab-blended" class="preview-tab active" onclick="switchPreviewTab('blended')">Blended Overlay</div>
+                        </div>
+                    </div>
+
+                    <div class="viewport-wrapper">
+                        <!-- Loading Overlay -->
+                        <div id="studio-loader" class="loader-overlay">
+                            <div class="spinner"></div>
+                            <div class="loader-text">Analyzing structural concrete matrix...</div>
+                        </div>
+                        
+                        <img id="stillViewportImg" src="" alt="Frame data loading...">
+                    </div>
+
+                    <!-- Metrics cards below image -->
+                    <div class="metrics-grid">
+                        <div class="metric-card card-total">
+                            <div id="metric-total-cracks" class="metric-val" style="color: var(--accent-pink);">0</div>
+                            <div class="metric-label">Cracks Detected</div>
+                        </div>
+                        <div class="metric-card card-critical">
+                            <div id="metric-critical" class="metric-val" style="color: var(--danger);">0</div>
+                            <div class="metric-label">Critical Defects</div>
+                        </div>
+                        <div class="metric-card card-moderate">
+                            <div id="metric-moderate" class="metric-val" style="color: var(--warning);">0</div>
+                            <div class="metric-label">Moderate Risks</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sliders Controls (Right) -->
+                <div class="glass-panel controls-card">
+                    <h3 style="margin-bottom: 5px;">Analysis Tuning Controls</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px 0;">Calibrate OpenCV filters & YOLO parameters in real-time.</p>
+
+                    <!-- Auto-Enhance Switch -->
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="param-auto-enhance" onchange="debouncedRunAnalysis()">
+                        <div>
+                            Auto-Enhance Crack Details
+                            <span>Applies CLAHE histogram contrast boost to raw concrete.</span>
+                        </div>
+                    </label>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Brightness & Contrast -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Image Contrast</span>
+                            <span id="lbl-contrast" class="val">0</span>
+                        </div>
+                        <input type="range" id="param-contrast" min="-100" max="100" value="0" oninput="updateSliderLabel('contrast', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Image Brightness</span>
+                            <span id="lbl-brightness" class="val">0</span>
+                        </div>
+                        <input type="range" id="param-brightness" min="-100" max="100" value="0" oninput="updateSliderLabel('brightness', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Bilateral Filter -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Bilateral Filter Kernel (d)</span>
+                            <span id="lbl-bilateral_d" class="val">5</span>
+                        </div>
+                        <input type="range" id="param-bilateral_d" min="1" max="15" value="5" step="2" oninput="updateSliderLabel('bilateral_d', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Bilateral Color Sigma</span>
+                            <span id="lbl-bilateral_sigma_color" class="val">40</span>
+                        </div>
+                        <input type="range" id="param-bilateral_sigma_color" min="10" max="150" value="40" step="5" oninput="updateSliderLabel('bilateral_sigma_color', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Adaptive Threshold -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Adaptive Threshold Block Size</span>
+                            <span id="lbl-threshold_block_size" class="val">11</span>
+                        </div>
+                        <input type="range" id="param-threshold_block_size" min="3" max="31" value="11" step="2" oninput="updateSliderLabel('threshold_block_size', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Adaptive Threshold Constant (C)</span>
+                            <span id="lbl-threshold_c" class="val">3</span>
+                        </div>
+                        <input type="range" id="param-threshold_c" min="-10" max="20" value="3" step="1" oninput="updateSliderLabel('threshold_c', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Geometry Filters -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Min Area Threshold</span>
+                            <span id="lbl-min_area" class="val">15 px</span>
+                        </div>
+                        <input type="range" id="param-min_area" min="5" max="100" value="15" step="1" oninput="updateSliderLabel('min_area', this.value + ' px'); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Min Perimeter Threshold</span>
+                            <span id="lbl-min_perimeter" class="val">80 px</span>
+                        </div>
+                        <input type="range" id="param-min_perimeter" min="10" max="200" value="80" step="5" oninput="updateSliderLabel('min_perimeter', this.value + ' px'); debouncedRunAnalysis();">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Min Elongation Ratio</span>
+                            <span id="lbl-min_aspect_ratio" class="val">2.5</span>
+                        </div>
+                        <input type="range" id="param-min_aspect_ratio" min="1.0" max="10.0" value="2.5" step="0.5" oninput="updateSliderLabel('min_aspect_ratio', this.value); debouncedRunAnalysis();">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Severity Report Table (Full Width) -->
+            <div class="glass-panel report-section">
+                <h3>Detailed Structural Severity Analysis Report</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 18px 0;">Individual geometric specifications of all confirmed crack contours in localized regions.</p>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Crack ID</th>
+                                <th>Severity Status</th>
+                                <th>Region Bounds (X1, Y1, X2, Y2)</th>
+                                <th>Width (px)</th>
+                                <th>Height (px)</th>
+                                <th>Total Perimeter (px)</th>
+                                <th>Contour Area (px²)</th>
+                                <th>Elongation Ratio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="severityTableBody">
+                            <tr>
+                                <td colspan="8" class="empty-row-msg">No diagnostic dataset generated. Capture a still frame to begin.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </div>
+
 </div>
 
 <script>
-    function handleSourceChange() {
-        const selector = document.getElementById('cameraSelector');
-        const customGroup = document.getElementById('customUrlGroup');
-        
-        if (selector.value === 'custom') {
-            customGroup.style.display = 'flex';
-        } else {
-            customGroup.style.display = 'none';
-            fireSourceUpdate(selector.value);
-        }
-    }
-
-    function applyCustomSource() {
-        const customUrl = document.getElementById('customUrlInput').value.trim();
-        if (customUrl) {
-            fireSourceUpdate(customUrl);
-        }
-    }
-
-    function fireSourceUpdate(sourceValue) {
-        const payload = new FormData();
-        payload.append('source', sourceValue);
-
-        // Fire asynchronous context payload update without causing frontend window flash or reload
-        fetch("{% url 'change_source' %}", {
-            method: "POST",
-            body: payload
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                console.log("[SYSTEM] Source updated successfully:", data.active_source);
-            } else {
-                alert("Failed to transition stream target.");
-            }
-        })
-        .catch(err => console.error("[ERROR] Failed to forward switch signal:", err));
-    }
+    window.DjangoUrls = {
+        toggleStream: "{% url 'toggle_stream' %}",
+        captureStill: "{% url 'capture_still' %}",
+        analyzeCapturedFrame: "{% url 'analyze_captured_frame' %}",
+        changeSource: "{% url 'change_source' %}"
+    };
 </script>
+<script src="{% static 'js/diagnostics.js' %}"></script>
 
 </body>
 </html>
