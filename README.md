@@ -1,4 +1,4 @@
-# UAS Structural Health & Crack Diagnostics Hub
+# Structural Health & Crack Diagnostics Hub
 
 A high-performance, real-time computer vision and machine learning platform designed for inspection drone rigs, webcam systems, and static captures. The application detects and quantifies structural concrete crack defects dynamically, utilizing a dual-threaded Django + OpenCV pipeline coupled with custom YOLOv8 Nano deep learning weights.
 
