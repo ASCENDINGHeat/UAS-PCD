@@ -1,1 +1,77 @@
 .venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
+*.~
+*.tmp
+*.log
+*.pot
+*.py[cod]
+*~
+.DS_Store
+.idea/
+.vscode/
+*.sqlite3
+/media/
+/staticfiles/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# If using django-storages and S3
+*.pyc
+*.pyo
+*.pyd
+
+# PyCharm
+*.iml
+*.ipr
+*.iws
+
+# Pipenv
+Pipfile.lock
+
+# Virtualenv
+.python-version
+
+# Coverage
+.coverage
+htmlcov/
+.coverage.*
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+.dmypy.json
+
+# celery beat schedule file
+celerybeat-schedule
+
+# dotenv
+.env
+
+# local env files
+*.env
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
