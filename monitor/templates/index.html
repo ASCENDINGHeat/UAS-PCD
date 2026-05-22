@@ -50,6 +50,17 @@
                 </div>
             </div>
 
+            <div class="viewport-tabs-container">
+                <h3>Live Feed Viewport</h3>
+                <div class="preview-tabs">
+                    <div id="live-tab-blended" class="preview-tab active" onclick="switchLiveTab('blended')">Blended Overlay</div>
+                    <div id="live-tab-grayscale" class="preview-tab" onclick="switchLiveTab('grayscale')">Grayscale</div>
+                    <div id="live-tab-denoised" class="preview-tab" onclick="switchLiveTab('denoised')">Denoised</div>
+                    <div id="live-tab-thresholded" class="preview-tab" onclick="switchLiveTab('thresholded')">Thresholded</div>
+                    <div id="live-tab-morphological" class="preview-tab" onclick="switchLiveTab('morphological')">Morphological</div>
+                </div>
+            </div>
+
             <div class="viewport-wrapper">
                 <img id="liveFeedImg" src="{% url 'video_feed_blended' %}" alt="Awaiting Stream Connection Synchronization...">
             </div>
@@ -251,7 +262,12 @@
         toggleStream: "{% url 'toggle_stream' %}",
         captureStill: "{% url 'capture_still' %}",
         analyzeCapturedFrame: "{% url 'analyze_captured_frame' %}",
-        changeSource: "{% url 'change_source' %}"
+        changeSource: "{% url 'change_source' %}",
+        feedBlended: "{% url 'video_feed_blended' %}",
+        feedGrayscale: "{% url 'video_feed_grayscale' %}",
+        feedDenoised: "{% url 'video_feed_denoised' %}",
+        feedThresholded: "{% url 'video_feed_thresholded' %}",
+        feedMorphological: "{% url 'video_feed_morphological' %}"
     };
 </script>
 <script src="{% static 'js/diagnostics.js' %}"></script>

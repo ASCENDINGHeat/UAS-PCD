@@ -52,7 +52,7 @@ class AsynchronousCrackTracker:
 
     def _crack_processor_loop(self):
         """Thread 2: Localized YOLO region inference loop with Geometry Filtering."""
-        target_fps = 10
+        target_fps = 5
         interval = 1.0 / target_fps
         while self.is_running:
             if self.is_paused:
@@ -154,6 +154,47 @@ class AsynchronousCrackTracker:
         ret, jpeg = cv2.imencode('.jpg', output)
         return jpeg.tobytes() if ret else None
 
+    def get_processed_live_frame(self, mode):
+        with self.lock:
+            if self.raw_frame is None: return None
+            output = self.raw_frame.copy()
+            
+        if mode == 'grayscale':
+            gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+            ret, jpeg = cv2.imencode('.jpg', gray)
+            return jpeg.tobytes() if ret else None
+            
+        elif mode == 'denoised':
+            gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+            # Use GaussianBlur for fast real-time 30 FPS processing
+            denoised = cv2.GaussianBlur(gray, (5, 5), 0)
+            ret, jpeg = cv2.imencode('.jpg', denoised)
+            return jpeg.tobytes() if ret else None
+            
+        elif mode == 'thresholded':
+            gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+            denoised = cv2.GaussianBlur(gray, (5, 5), 0)
+            thresh = cv2.adaptiveThreshold(
+                denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                cv2.THRESH_BINARY_INV, blockSize=11, C=3
+            )
+            ret, jpeg = cv2.imencode('.jpg', thresh)
+            return jpeg.tobytes() if ret else None
+            
+        elif mode == 'morphological':
+            gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+            denoised = cv2.GaussianBlur(gray, (5, 5), 0)
+            thresh = cv2.adaptiveThreshold(
+                denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                cv2.THRESH_BINARY_INV, blockSize=11, C=3
+            )
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+            ret, jpeg = cv2.imencode('.jpg', closed)
+            return jpeg.tobytes() if ret else None
+            
+        return None
+
 
 # Global tracker engine resource instantiation
 tracker = AsynchronousCrackTracker(0)
@@ -168,8 +209,30 @@ def gen_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n\r\n')
         time.sleep(1.0 / 30.0)
 
+def gen_frames_processed(mode):
+    while True:
+        frame_bytes = tracker.get_processed_live_frame(mode)
+        if frame_bytes is None:
+            time.sleep(0.01)
+            continue
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n\r\n')
+        time.sleep(1.0 / 30.0)
+
 def video_feed_blended(request):
     return StreamingHttpResponse(gen_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
+
+def video_feed_grayscale(request):
+    return StreamingHttpResponse(gen_frames_processed('grayscale'), content_type='multipart/x-mixed-replace; boundary=frame')
+
+def video_feed_denoised(request):
+    return StreamingHttpResponse(gen_frames_processed('denoised'), content_type='multipart/x-mixed-replace; boundary=frame')
+
+def video_feed_thresholded(request):
+    return StreamingHttpResponse(gen_frames_processed('thresholded'), content_type='multipart/x-mixed-replace; boundary=frame')
+
+def video_feed_morphological(request):
+    return StreamingHttpResponse(gen_frames_processed('morphological'), content_type='multipart/x-mixed-replace; boundary=frame')
 
 @csrf_exempt
 def change_source(request):

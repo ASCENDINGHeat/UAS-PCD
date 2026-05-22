@@ -259,3 +259,33 @@ function fireSourceUpdate(sourceValue) {
     })
     .catch(err => console.error("[ERROR] Failed to forward switch signal:", err));
 }
+
+// Switch between the processed live feed stream views
+function switchLiveTab(tabId) {
+    const tabs = ['blended', 'grayscale', 'denoised', 'thresholded', 'morphological'];
+    tabs.forEach(t => {
+        const tabEl = document.getElementById('live-tab-' + t);
+        if (tabEl) {
+            if (t === tabId) {
+                tabEl.classList.add('active');
+            } else {
+                tabEl.classList.remove('active');
+            }
+        }
+    });
+    
+    const imgEl = document.getElementById('liveFeedImg');
+    if (!imgEl || !window.DjangoUrls) return;
+    
+    if (tabId === 'grayscale') {
+        imgEl.src = window.DjangoUrls.feedGrayscale;
+    } else if (tabId === 'denoised') {
+        imgEl.src = window.DjangoUrls.feedDenoised;
+    } else if (tabId === 'thresholded') {
+        imgEl.src = window.DjangoUrls.feedThresholded;
+    } else if (tabId === 'morphological') {
+        imgEl.src = window.DjangoUrls.feedMorphological;
+    } else {
+        imgEl.src = window.DjangoUrls.feedBlended;
+    }
+}
