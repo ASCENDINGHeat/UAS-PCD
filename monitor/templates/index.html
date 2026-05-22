@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structural Health Diagnostics</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f0f11; color: #f1f5f9; margin: 0; padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; text-align: center; }
+        
+        /* Control Panel Layout */
+        .control-panel {
+            background-color: #16161a;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #a1a1aa; }
+        select, input, button {
+            background-color: #27272a; color: #fff; border: 1px solid #3f3f46;
+            padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; margin-top: 5px; outline: none;
+        }
+        select { width: 100%; cursor: pointer; }
+        .custom-input-group { display: none; margin-top: 12px; gap: 10px; }
+        input { flex-grow: 1; }
+        button { background-color: #2563eb; border: none; font-weight: 600; cursor: pointer; }
+        button:hover { background-color: #1d4ed8; }
+        
+        .viewport { background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #2d2d34; }
+        img { display: block; width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Real-Time Diagnostics Feed</h2>
+
+    <div class="control-panel">
+        <label for="cameraSelector">Active Video Source Target Selection</label>
+        <select id="cameraSelector" onchange="handleSourceChange()">
+            <option value="0">Default Internal System Webcam (/dev/video0)</option>
+            <option value="1">Secondary USB Capture Device Port (/dev/video1)</option>
+            <option value="http://192.168.1.50:8080/video">Wireless Phone Module Stream (HTTP MJPEG)</option>
+            <option value="rtsp://admin:password@192.168.1.50:554/h264Preview_01_main">Inspection Drone Rig (RTSP Feed)</option>
+            <option value="custom">-- Provide Custom Stream Network URL --</option>
+        </select>
+
+        <div id="customUrlGroup" class="custom-input-group">
+            <input type="text" id="customUrlInput" placeholder="rtsp:// or http:// transmission target...">
+            <button onclick="applyCustomSource()">Connect Stream</button>
+        </div>
+    </div>
+
+    <div class="viewport">
+        <img src="{% url 'video_feed_blended' %}" alt="Awaiting Stream Connection Synchronization...">
+    </div>
+</div>
+
+<script>
+    function handleSourceChange() {
+        const selector = document.getElementById('cameraSelector');
+        const customGroup = document.getElementById('customUrlGroup');
+        
+        if (selector.value === 'custom') {
+            customGroup.style.display = 'flex';
+        } else {
+            customGroup.style.display = 'none';
+            fireSourceUpdate(selector.value);
+        }
+    }
+
+    function applyCustomSource() {
+        const customUrl = document.getElementById('customUrlInput').value.trim();
+        if (customUrl) {
+            fireSourceUpdate(customUrl);
+        }
+    }
+
+    function fireSourceUpdate(sourceValue) {
+        const payload = new FormData();
+        payload.append('source', sourceValue);
+
+        // Fire asynchronous context payload update without causing frontend window flash or reload
+        fetch("{% url 'change_source' %}", {
+            method: "POST",
+            body: payload
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                console.log("[SYSTEM] Source updated successfully:", data.active_source);
+            } else {
+                alert("Failed to transition stream target.");
+            }
+        })
+        .catch(err => console.error("[ERROR] Failed to forward switch signal:", err));
+    }
+</script>
+
+</body>
+</html>
