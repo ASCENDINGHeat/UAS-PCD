@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "uas-crack-diagnostics"
+name = "crack-diagnostics"
 version = "1.0.0"
 description = "A thread-safe real-time video stream processor and parameter-tuned diagnostic still image analysis studio for structural health concrete crack detection using YOLOv8."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
-    { name = "UAS Crack Diagnostics Team" }
+    { name = "ASCENSION" }
 ]
 classifiers = [
     "Framework :: Django",
