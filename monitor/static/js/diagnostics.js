@@ -95,6 +95,59 @@ function captureAndAnalyzeFrame() {
     });
 }
 
+// Upload and analyze a local color image
+function handleLocalImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const uploadLabel = event.target.parentElement;
+    const originalText = uploadLabel.querySelector('span').textContent;
+    uploadLabel.querySelector('span').textContent = "📤 Uploading Image...";
+    uploadLabel.style.opacity = "0.7";
+    uploadLabel.style.pointerEvents = "none";
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const url = window.DjangoUrls ? window.DjangoUrls.uploadImage : '/upload/';
+    fetch(url, {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            activeStillId = data.still_id;
+
+            // Enable Nav Tab
+            const navStill = document.getElementById('nav-still');
+            navStill.classList.remove('disabled');
+
+            // Pause stream threads
+            toggleStreamPause(true).then(() => {
+                // Navigate to Still Studio
+                navigate('still');
+                // Reset preview tab
+                switchPreviewTab('blended');
+                // Trigger Analysis
+                runAnalysis();
+            });
+        } else {
+            alert("Failed to upload local image file: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error("[ERROR] Failed to upload local image:", err);
+        alert("Connection error during image file upload.");
+    })
+    .finally(() => {
+        uploadLabel.querySelector('span').textContent = originalText;
+        uploadLabel.style.opacity = "";
+        uploadLabel.style.pointerEvents = "";
+        event.target.value = '';
+    });
+}
+
 // Swaps preview tab
 function switchPreviewTab(tabId) {
     activePreviewTab = tabId;

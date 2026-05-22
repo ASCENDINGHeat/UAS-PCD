@@ -11,5 +11,6 @@ urlpatterns = [
     path('change_source/', views.change_source, name='change_source'),
     path('toggle_stream/', views.toggle_stream, name='toggle_stream'),
     path('capture/', views.capture_still, name='capture_still'),
+    path('upload/', views.upload_image, name='upload_image'),
     path('analyze/', views.analyze_captured_frame, name='analyze_captured_frame'),
 ]

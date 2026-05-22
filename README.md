@@ -11,6 +11,7 @@ A high-performance, real-time computer vision and machine learning platform desi
 * **Separation of Concerns Viewport**: Designed as a Single-Page Application (SPA) with a dark glassmorphic styling, enabling seamless transitions between:
   1. **Live Feed View**: Real-time inspection streams supporting on-the-fly preview switches (Blended, Grayscale, Denoised, Thresholded, and Morphological Closing).
   2. **Still Analysis Studio**: A dedicated local diagnostics editor loaded with debounced parameter adjusters and a detailed severity analysis spreadsheet.
+* **Local Image File Upload**: Supports uploading local JPEG/PNG concrete images directly through the dashboard, thread-safely pausing stream engines, caching BGR matrices in-memory, and immediately executing high-resolution crack inspections.
 * **Edge-Preserving Parametric Filters**: Supports real-time adjustments of image contrast, brightness, Bilateral filtering, and Gaussian Adaptive thresholding parameters.
 * **Automated Local Enhancement**: Features **CLAHE** (Contrast Limited Adaptive Histogram Equalization) on the Y (luminance) channel in the YCrCb color space to boost local concrete cracks in shadow matrices.
 * **Decoupled Assets**: Fully decoupled inline stylesheets and script behaviors into external static resource files (`styles.css` and `diagnostics.js`).

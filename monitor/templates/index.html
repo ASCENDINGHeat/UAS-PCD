@@ -65,9 +65,16 @@
                 <img id="liveFeedImg" src="{% url 'video_feed_blended' %}" alt="Awaiting Stream Connection Synchronization...">
             </div>
 
-            <button class="btn btn-capture" onclick="captureAndAnalyzeFrame()">
-                📸 Snap & Analyze Still Frame
-            </button>
+            <div style="display: flex; gap: 12px; margin-top: 15px; width: 100%;">
+                <button class="btn btn-capture" style="flex: 1; margin: 0;" onclick="captureAndAnalyzeFrame()">
+                    Snap & Analyze Still Frame
+                </button>
+                
+                <label class="btn btn-primary" style="flex: 1; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; border-radius: 8px; transition: all 0.2s;">
+                    <input type="file" id="localImageUpload" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(event)">
+                    <span>Upload Local Color Image</span>
+                </label>
+            </div>
         </div>
     </div>
 
@@ -78,7 +85,7 @@
             <div class="pause-alert">
                 <span>Active camera stream paused to conserve system overhead during analysis.</span>
                 <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="resumeLiveStream()">
-                    ▶️ Resume Live Stream
+                    Resume Live Stream
                 </button>
             </div>
 
@@ -263,6 +270,7 @@
         captureStill: "{% url 'capture_still' %}",
         analyzeCapturedFrame: "{% url 'analyze_captured_frame' %}",
         changeSource: "{% url 'change_source' %}",
+        uploadImage: "{% url 'upload_image' %}",
         feedBlended: "{% url 'video_feed_blended' %}",
         feedGrayscale: "{% url 'video_feed_grayscale' %}",
         feedDenoised: "{% url 'video_feed_denoised' %}",

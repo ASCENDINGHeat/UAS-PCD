@@ -286,6 +286,41 @@ def capture_still(request):
 
 
 @csrf_exempt
+def upload_image(request):
+    """API Endpoint to upload a local image file and cache it in captured_buffer."""
+    if request.method == 'POST':
+        if 'image' not in request.FILES:
+            return JsonResponse({'status': 'error', 'message': 'No image file provided in upload.'}, status=400)
+            
+        uploaded_file = request.FILES['image']
+        try:
+            # Read file data directly from memory into numpy array
+            file_bytes = np.frombuffer(uploaded_file.read(), np.uint8)
+            img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+            
+            if img is None:
+                return JsonResponse({'status': 'error', 'message': 'Failed to decode image file format.'}, status=400)
+                
+            h, w = img.shape[:2]
+            # Store in captured_buffer
+            still_id = str(uuid.uuid4())
+            captured_buffer[still_id] = img
+            
+            print(f"[TRACKER] Local image uploaded successfully. UUID: {still_id}, resolution: {w}x{h}")
+            return JsonResponse({
+                'status': 'success', 
+                'still_id': still_id,
+                'width': w,
+                'height': h
+            })
+        except Exception as e:
+            print(f"[ERROR] Error processing uploaded file: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': f'Internal error processing file: {str(e)}'}, status=500)
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid Method'}, status=400)
+
+
+@csrf_exempt
 def analyze_captured_frame(request):
     """API Endpoint to perform parameterized crack analysis on a stored frame."""
     if request.method != 'POST':
