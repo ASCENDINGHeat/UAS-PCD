@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uas-crack-diagnostics"
+version = "1.0.0"
+description = "A thread-safe real-time video stream processor and parameter-tuned diagnostic still image analysis studio for structural health concrete crack detection using YOLOv8."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "UAS Crack Diagnostics Team" }
+]
+classifiers = [
+    "Framework :: Django",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    "django>=6.0.5",
+    "asgiref>=3.11.1",
+    "sqlparse>=0.5.5",
+    "opencv-python>=4.13.0.92",
+    "ultralytics>=8.4.52",
+    "onnxruntime>=1.26.0",
+    "numpy>=2.4.6",
+    "pillow>=12.2.0",
+    "requests>=2.34.2",
+    "urllib3>=2.7.0",
+    "certifi>=2026.5.20",
+    "charset-normalizer>=3.4.7",
+    "idna>=3.15",
+    "typing-extensions>=4.15.0",
+]
+
+[tool.setuptools]
+packages = ["monitor", "core"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N"]
+ignore = []
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
